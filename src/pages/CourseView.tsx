@@ -62,7 +62,7 @@ export default function CourseView() {
 
   // Set default active tab based on course type
   useEffect(() => {
-    if (course?.type === 'pdf' && activeTab === 'video') {
+    if (course?.type === 'pdf') {
       setActiveTab('notes');
     }
   }, [course, activeTab]);
@@ -117,42 +117,111 @@ export default function CourseView() {
 
               {/* Tab Content */}
               <div className="p-6">
-                {activeTab === 'video' && course?.type === 'youtube' && (
-                  <VideoPlayer videoUrl={course.videoUrl} />
+                {activeTab === 'video' && course?.type === 'youtube' && course.videoUrl && (
+                  <div className="space-y-4">
+                    <VideoPlayer videoUrl={course.videoUrl} />
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">Video Notes</h4>
+                      <p className="text-gray-600 text-sm">
+                        Watch the video above and refer to the notes tab for detailed explanations of key concepts.
+                      </p>
+                    </div>
+                  </div>
                 )}
 
                 {activeTab === 'notes' && (
                   <div className="prose max-w-none">
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Course Notes</h3>
-                      <p className="text-gray-600">Comprehensive notes generated from your content</p>
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-8">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        {course?.type === 'pdf' ? 'PDF Content Analysis' : 'Video Lecture Notes'}
+                      </h3>
+                      <p className="text-gray-600">
+                        {course?.type === 'pdf' 
+                          ? 'Key concepts and insights extracted from your PDF document'
+                          : 'Comprehensive notes generated from the video content'
+                        }
+                      </p>
                     </div>
-                    <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                      {course.notes[0]?.content || 'No notes available'}
-                    </div>
+                    
+                    {course?.notes && course.notes.length > 0 ? (
+                      <div className="space-y-8">
+                        {course.notes.map((note, index) => (
+                          <div key={note.id} className="border-l-4 border-blue-500 pl-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-lg font-semibold text-gray-900">{note.title}</h4>
+                              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                {note.duration}
+                              </span>
+                            </div>
+                            <div 
+                              className="prose prose-gray max-w-none text-gray-700 leading-relaxed"
+                              dangerouslySetInnerHTML={{ 
+                                __html: note.content.replace(/\n/g, '<br>').replace(/## (.*)/g, '<h3 class="text-lg font-semibold text-gray-900 mt-6 mb-3">$1</h3>').replace(/### (.*)/g, '<h4 class="text-base font-medium text-gray-800 mt-4 mb-2">$1</h4>') 
+                              }}
+                            />
+                            {index < course.notes.length - 1 && (
+                              <hr className="my-8 border-gray-200" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <div className="text-gray-400 mb-4">
+                          <BookOpen className="w-16 h-16 mx-auto" />
+                        </div>
+                        <h4 className="text-lg font-medium text-gray-600 mb-2">No notes available</h4>
+                        <p className="text-gray-500">
+                          The content analysis is still processing. Please check back in a moment.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {activeTab === 'quiz' && (
                   <div className="text-center py-12">
-                    <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg p-8 mb-6">
+                    <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg p-8 mb-8">
                       <Brain className="w-16 h-16 text-emerald-600 mx-auto mb-4" />
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">Test Your Knowledge</h3>
                       <p className="text-gray-600 mb-6">
-                        Challenge yourself with {course.quizzes[0]?.questions.length || 0} questions based on the course content
+                        Challenge yourself with {course?.quizzes?.[0]?.questions?.length || 0} questions based on the 
+                        {course?.type === 'pdf' ? ' PDF content' : ' video content'}
                       </p>
-                      <button
-                        onClick={() => setIsQuizOpen(true)}
-                        className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-lg hover:from-emerald-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
-                      >
-                        Start Quiz
-                      </button>
+                      {course?.quizzes?.[0]?.questions?.length > 0 ? (
+                        <button
+                          onClick={() => setIsQuizOpen(true)}
+                          className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-lg hover:from-emerald-700 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                        >
+                          Start Quiz ({course.quizzes[0].questions.length} questions)
+                        </button>
+                      ) : (
+                        <div className="text-gray-500">
+                          <p>Quiz questions are being generated...</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
 
                 {activeTab === 'flashcards' && (
-                  <FlashcardDeck flashcards={course.flashcards} />
+                  <>
+                    {course?.flashcards && course.flashcards.length > 0 ? (
+                      <FlashcardDeck flashcards={course.flashcards} />
+                    ) : (
+                      <div className="text-center py-12">
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-8">
+                          <div className="text-gray-400 mb-4">
+                            <BookOpen className="w-16 h-16 mx-auto" />
+                          </div>
+                          <h4 className="text-lg font-medium text-gray-600 mb-2">Flashcards Coming Soon</h4>
+                          <p className="text-gray-500">
+                            AI is generating smart flashcards from your {course?.type === 'pdf' ? 'PDF' : 'video'} content.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -161,13 +230,28 @@ export default function CourseView() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
-              <img
-                src={course.thumbnail}
-                alt={course.title}
-                className="w-full h-32 object-cover rounded-lg mb-4"
-              />
+              <div className="relative mb-4">
+                <img
+                  src={course.thumbnail}
+                  alt={course.title}
+                  className="w-full h-32 object-cover rounded-lg"
+                />
+                <div className="absolute top-2 right-2">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    course.type === 'pdf' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {course.type.toUpperCase()}
+                  </span>
+                </div>
+              </div>
               <h3 className="font-semibold text-gray-900 mb-2">Course Overview</h3>
               <div className="space-y-3 text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span>Type:</span>
+                  <span className="font-medium capitalize">{course.type}</span>
+                </div>
                 <div className="flex justify-between">
                   <span>Duration:</span>
                   <span className="font-medium">{course.duration}</span>
@@ -178,7 +262,7 @@ export default function CourseView() {
                 </div>
                 <div className="flex justify-between">
                   <span>Questions:</span>
-                  <span className="font-medium">{course.quizzes[0]?.questions.length || 0}</span>
+                  <span className="font-medium">{course?.quizzes?.[0]?.questions?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Flashcards:</span>
@@ -188,7 +272,7 @@ export default function CourseView() {
               
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <p className="text-xs text-gray-500">
-                  Created on {new Date(course.createdAt).toLocaleDateString()}
+                  Created on {new Date(course.createdAt || Date.now()).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -197,7 +281,7 @@ export default function CourseView() {
       </div>
 
       {/* Quiz Modal */}
-      {isQuizOpen && course?.quizzes?.[0] && (
+      {isQuizOpen && course?.quizzes?.[0] && course.quizzes[0].questions.length > 0 && (
         <QuizModal
           isOpen={isQuizOpen}
           quiz={course.quizzes[0]}
@@ -209,8 +293,8 @@ export default function CourseView() {
       {/* AI Tutor Chatbot */}
       <ChatBot 
         courseContext={{
-          title: course.title,
-          currentLesson: tabs.find(tab => tab.id === activeTab)?.label,
+          title: course?.title || 'Course',
+          currentLesson: availableTabs.find(tab => tab.id === activeTab)?.label,
           progress: 75
         }}
       />
