@@ -55,28 +55,38 @@ const CreateCourse = () => {
   const generateCourse = async () => {
     setProcessing(true);
     
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Generate course based on input type
-    let generatedCourse;
-    if (activeTab === 'youtube' && youtubeUrl.trim()) {
-      generatedCourse = generateCourseFromYoutube(youtubeUrl);
-    } else if (activeTab === 'pdf' && selectedFile) {
-      generatedCourse = generateCourseFromPdf(selectedFile);
+    try {
+      // Simulate AI processing with realistic steps
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Generate course based on input type
+      let generatedCourse;
+      if (activeTab === 'youtube' && youtubeUrl.trim()) {
+        generatedCourse = generateCourseFromYoutube(youtubeUrl);
+      } else if (activeTab === 'pdf' && selectedFile) {
+        generatedCourse = generateCourseFromPdf(selectedFile);
+      }
+      
+      if (generatedCourse) {
+        saveCourse(generatedCourse);
+        setProcessing(false);
+        setCourseGenerated(true);
+        
+        // Redirect to course view after a short delay
+        setTimeout(() => {
+          navigate(`/course/${generatedCourse.id}`);
+        }, 2000);
+      } else {
+        throw new Error('Failed to generate course');
+      }
+    } catch (error) {
+      console.error('Course generation failed:', error);
+      setProcessing(false);
+      // You could add error state handling here
+      alert('Failed to generate course. Please try again.');
     }
+  };
     
-    if (generatedCourse) {
-      saveCourse(generatedCourse);
-    }
-    
-    setProcessing(false);
-    setCourseGenerated(true);
-    
-    // Redirect to course view after a short delay
-    setTimeout(() => {
-      navigate(`/course/${generatedCourse?.id || 'new-course'}`);
-    }, 2000);
   };
 
   const processingSteps = [

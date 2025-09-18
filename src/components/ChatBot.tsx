@@ -59,47 +59,176 @@ const ChatBot: React.FC<ChatBotProps> = ({ courseContext }) => {
 
   const generateAIResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
+    const messageWords = userMessage.split(' ');
+    const conversationContext = messages.slice(-3); // Last 3 messages for context
+    const timestamp = Date.now();
     
-    // Keep track of conversation context
-    const conversationLength = messages.length;
-    const isFollowUp = conversationLength > 2;
+    // Generate truly dynamic responses based on user input
+    const keyTerms = extractKeyTerms(userMessage);
+    const questionType = detectQuestionType(userMessage);
+    const userIntent = detectUserIntent(userMessage);
     
-    // Context-aware responses
-    if (courseContext) {
-      if (lowerMessage.includes('explain') || lowerMessage.includes('what is')) {
-        const explanationResponses = [
-          `Let me explain that concept from "${courseContext.title}" in detail. ${getSpecificExplanation(userMessage)}`,
-          `That's an excellent question about "${courseContext.title}". Here's how I'd break it down: ${getSpecificExplanation(userMessage)}`,
-          `I can help clarify that concept. In the context of "${courseContext.title}", ${getSpecificExplanation(userMessage)}`,
-          `Great question! This is a key concept in "${courseContext.title}". ${getSpecificExplanation(userMessage)}`
-        ];
-        return explanationResponses[Math.floor(Math.random() * explanationResponses.length)];
-      }
-      
-      if (lowerMessage.includes('quiz') || lowerMessage.includes('test')) {
-        return generateQuizResponse(userMessage, courseContext.title);
-      }
-      
-      if (lowerMessage.includes('help') || lowerMessage.includes('stuck')) {
-        return generateHelpResponse(userMessage, courseContext);
-      }
+    // Generate response based on user intent and context
+    switch (userIntent) {
+      case 'explanation':
+        return generateExplanationResponse(userMessage, keyTerms, courseContext);
+      case 'quiz':
+        return generateQuizResponse(userMessage, keyTerms, courseContext);
+      case 'help':
+        return generateHelpResponse(userMessage, keyTerms, courseContext);
+      case 'study_tips':
+        return generateStudyTipsResponse(userMessage, keyTerms, conversationContext);
+      case 'motivation':
+        return generateMotivationResponse(userMessage, keyTerms);
+      case 'specific_question':
+        return generateSpecificAnswerResponse(userMessage, keyTerms, courseContext);
+      default:
+        return generateContextualResponse(userMessage, keyTerms, conversationContext, courseContext);
+    }
+  };
+
+  const detectUserIntent = (message: string): string => {
+    const lowerMessage = message.toLowerCase();
+    
+    if (lowerMessage.includes('explain') || lowerMessage.includes('what is') || lowerMessage.includes('how does')) {
+      return 'explanation';
+    }
+    if (lowerMessage.includes('quiz') || lowerMessage.includes('test') || lowerMessage.includes('question')) {
+      return 'quiz';
+    }
+    if (lowerMessage.includes('help') || lowerMessage.includes('stuck') || lowerMessage.includes('confused')) {
+      return 'help';
+    }
+    if (lowerMessage.includes('study') || lowerMessage.includes('learn better') || lowerMessage.includes('tips')) {
+      return 'study_tips';
+    }
+    if (lowerMessage.includes('motivat') || lowerMessage.includes('discourag') || lowerMessage.includes('difficult')) {
+      return 'motivation';
+    }
+    if (message.includes('?') || lowerMessage.startsWith('why') || lowerMessage.startsWith('how')) {
+      return 'specific_question';
+    }
+    return 'general';
+  };
+
+  const detectQuestionType = (message: string): string => {
+    if (message.includes('?')) return 'question';
+    if (message.toLowerCase().startsWith('explain')) return 'explanation_request';
+    if (message.toLowerCase().includes('help')) return 'help_request';
+    return 'statement';
+  };
+
+  const generateExplanationResponse = (userMessage: string, keyTerms: string[], courseContext: any): string => {
+    const specificTerm = keyTerms[0] || 'this concept';
+    const explanations = [
+      `Let me break down ${specificTerm} for you. ${getDetailedExplanation(specificTerm, userMessage, courseContext)}`,
+      `${specificTerm} is an important concept. Here's how I'd explain it: ${getDetailedExplanation(specificTerm, userMessage, courseContext)}`,
+      `Great question about ${specificTerm}! ${getDetailedExplanation(specificTerm, userMessage, courseContext)}`,
+      `I can help clarify ${specificTerm}. ${getDetailedExplanation(specificTerm, userMessage, courseContext)}`
+    ];
+    
+    const randomIndex = Math.floor(Math.random() * explanations.length);
+    return explanations[randomIndex];
+  };
+
+  const generateQuizResponse = (userMessage: string, keyTerms: string[], courseContext: any): string => {
+    const topic = keyTerms[0] || (courseContext ? courseContext.title : 'this topic');
+    const quizResponses = [
+      `I'll create some practice questions about ${topic}. What type would you prefer - multiple choice, true/false, or short answer?`,
+      `Perfect! Let me generate quiz questions focusing on ${topic}. Should I make them beginner, intermediate, or advanced level?`,
+      `Great idea to test your knowledge of ${topic}! How many questions would you like me to create?`,
+      `Testing yourself on ${topic} is excellent for retention. What specific aspects should the questions cover?`
+    ];
+    
+    return quizResponses[Math.floor(Math.random() * quizResponses.length)];
+  };
+
+  const generateHelpResponse = (userMessage: string, keyTerms: string[], courseContext: any): string => {
+    const problemArea = keyTerms[0] || 'this topic';
+    const helpResponses = [
+      `I understand you're having trouble with ${problemArea}. Let's work through this step by step. What specific part is confusing you?`,
+      `No worries about struggling with ${problemArea} - that's completely normal! Can you tell me exactly where you're getting stuck?`,
+      `Let's tackle ${problemArea} together. Sometimes a different approach or example can make everything click. What have you tried so far?`,
+      `I'm here to help you master ${problemArea}. Breaking it down into smaller pieces often helps. Which aspect should we start with?`
+    ];
+    
+    return helpResponses[Math.floor(Math.random() * helpResponses.length)];
+  };
+
+  const generateStudyTipsResponse = (userMessage: string, keyTerms: string[], conversationContext: Message[]): string => {
+    const subject = keyTerms[0] || 'your studies';
+    const previousTopics = conversationContext.map(msg => extractKeyTerms(msg.content)).flat();
+    const isFollowUp = previousTopics.some(term => term.includes('study') || term.includes('tip'));
+    
+    if (isFollowUp) {
+      const advancedTips = [
+        `For ${subject}, try the "teaching method" - explain concepts out loud as if teaching someone else. This reveals gaps in understanding.`,
+        `Another effective technique for ${subject}: use the "connection method" - link new information to things you already know.`,
+        `Consider "interleaving" for ${subject} - mix different topics in one study session rather than focusing on just one.`,
+        `Try "elaborative interrogation" with ${subject} - constantly ask yourself "why" and "how" questions about the material.`
+      ];
+      return advancedTips[Math.floor(Math.random() * advancedTips.length)];
+    }
+    
+    const basicTips = [
+      `For studying ${subject} effectively: 1) Use active recall - test yourself frequently, 2) Space out your review sessions, 3) Create visual aids like mind maps. Which interests you most?`,
+      `Here are proven strategies for ${subject}: 1) Break material into chunks, 2) Use the Pomodoro Technique (25-min focused sessions), 3) Practice retrieval without looking at notes. What's your current approach?`,
+      `To master ${subject}: 1) Teach concepts to others (or yourself), 2) Create connections between ideas, 3) Use multiple senses (visual, auditory, kinesthetic). Which method appeals to you?`
+    ];
+    
+    return basicTips[Math.floor(Math.random() * basicTips.length)];
+  };
+
+  const generateMotivationResponse = (userMessage: string, keyTerms: string[]): string => {
+    const challenge = keyTerms[0] || 'learning';
+    const motivationResponses = [
+      `I understand ${challenge} feels overwhelming right now. Remember, every expert was once exactly where you are. What specific part can we tackle together to build your confidence?`,
+      `Struggling with ${challenge} means you're pushing your boundaries - that's where real growth happens! Let's break this down into manageable steps.`,
+      `It's completely normal to find ${challenge} challenging. Your brain is forming new neural pathways, which takes time and effort. What would help you feel more confident?`,
+      `Don't let ${challenge} discourage you. Every difficulty you overcome makes you stronger and more capable. What's one small step we can take right now?`
+    ];
+    
+    return motivationResponses[Math.floor(Math.random() * motivationResponses.length)];
+  };
+
+  const generateSpecificAnswerResponse = (userMessage: string, keyTerms: string[], courseContext: any): string => {
+    const mainTopic = keyTerms[0] || 'that';
+    
+    // Generate specific answers based on the question content
+    if (userMessage.toLowerCase().includes('why')) {
+      return `The reason ${mainTopic} works this way is because ${generateReasoningExplanation(mainTopic, userMessage)}. This is fundamental to understanding how everything connects together.`;
+    }
+    
+    if (userMessage.toLowerCase().includes('how')) {
+      return `Here's how ${mainTopic} works: ${generateProcessExplanation(mainTopic, userMessage)}. The key is understanding each step in the process.`;
+    }
+    
+    if (userMessage.toLowerCase().includes('when')) {
+      return `You would use ${mainTopic} when ${generateUseCaseExplanation(mainTopic, userMessage)}. Timing and context are crucial for effective application.`;
+    }
+    
+    return `Regarding ${mainTopic}, ${generateGeneralExplanation(mainTopic, userMessage, courseContext)}. This connects to several other important concepts you should know about.`;
+  };
+
+  const generateContextualResponse = (userMessage: string, keyTerms: string[], conversationContext: Message[], courseContext: any): string => {
+    const mainTopic = keyTerms[0] || 'this topic';
+    const messageLength = userMessage.split(' ').length;
+    const conversationLength = conversationContext.length;
+    
+    // Vary response based on conversation flow
+    if (conversationLength > 2) {
+      return `Building on our discussion, ${mainTopic} ${generateFollowUpContent(userMessage, keyTerms, conversationContext)}. This adds another layer to what we've been exploring.`;
+    }
+    
+    if (messageLength > 10) {
+      return `I can see you've thought deeply about ${mainTopic}. ${generateDetailedResponse(userMessage, keyTerms, courseContext)} Let me know if you'd like me to elaborate on any part.`;
+    }
+    
+    if (messageLength <= 3) {
+      return `I'd love to help you understand ${mainTopic} better! Could you give me a bit more context about what specifically interests you or what you're trying to learn?`;
     }
 
-    // General learning responses
-    if (lowerMessage.includes('study tips') || lowerMessage.includes('how to learn')) {
-      return generateStudyTipsResponse(userMessage, isFollowUp);
-    }
-    
-    if (lowerMessage.includes('flashcard') || lowerMessage.includes('memorize')) {
-      return generateFlashcardResponse(userMessage, isFollowUp);
-    }
-    
-    if (lowerMessage.includes('motivation') || lowerMessage.includes('discouraged')) {
-      return generateMotivationResponse(userMessage, isFollowUp);
-    }
-
-    // Generate contextual response based on user input
-    return generateContextualResponse(userMessage, conversationLength);
+    return `That's an interesting point about ${mainTopic}. ${generateAdaptiveResponse(userMessage, keyTerms, courseContext)} What aspect would you like to explore further?`;
   };
 
   const getSpecificExplanation = (userMessage: string): string => {
@@ -134,97 +263,102 @@ const ChatBot: React.FC<ChatBotProps> = ({ courseContext }) => {
     return "This is a fundamental concept that builds the foundation for more advanced topics. Let me explain it step by step so you can understand how it connects to what you're learning.";
   };
 
-  const generateQuizResponse = (userMessage: string, courseTitle: string): string => {
-    const quizResponses = [
-      `Perfect! Let me create some practice questions for "${courseTitle}". I'll focus on the key concepts we've been discussing. Would you prefer multiple choice, true/false, or open-ended questions?`,
-      `Testing your knowledge is a great way to reinforce learning! For "${courseTitle}", I can generate questions that target your specific areas of interest. What topics would you like me to focus on?`,
-      `Excellent idea! Practice questions help identify knowledge gaps. Based on "${courseTitle}", I'll create questions that challenge your understanding. Should I start with basic concepts or jump to more advanced topics?`,
-      `I love that you're taking an active approach to learning! For "${courseTitle}", I can create personalized quiz questions. What specific areas do you want to test yourself on?`
+  const generateReasoningExplanation = (topic: string, userMessage: string): string => {
+    const reasoningExplanations = [
+      `it follows fundamental principles that have been proven effective through research and practical application`,
+      `it's designed to solve specific problems efficiently while maintaining reliability and scalability`,
+      `it builds upon established theories and adapts them to modern requirements and constraints`,
+      `it represents the most effective approach discovered through years of experimentation and refinement`
     ];
     
-    return quizResponses[Math.floor(Math.random() * quizResponses.length)];
+    return reasoningExplanations[Math.floor(Math.random() * reasoningExplanations.length)];
   };
 
-  const generateHelpResponse = (userMessage: string, courseContext: any): string => {
-    const helpResponses = [
-      `I understand you're facing some challenges with "${courseContext.title}". Let's tackle this together! Can you tell me which specific concept or section is giving you trouble?`,
-      `Don't worry, getting stuck is part of the learning process! In "${courseContext.title}", there are often multiple ways to approach difficult concepts. What particular area would you like me to help clarify?`,
-      `I'm here to support your learning journey with "${courseContext.title}". Sometimes a different explanation or example can make everything click. What specific part is confusing you?`,
-      `Let's work through this challenge in "${courseContext.title}" step by step. Breaking down complex topics into smaller pieces often helps. Which aspect should we start with?`
+  const generateProcessExplanation = (topic: string, userMessage: string): string => {
+    const processExplanations = [
+      `it follows a systematic sequence of steps, each building upon the previous one to achieve the desired outcome`,
+      `it involves multiple phases that work together, with each phase having specific inputs, processes, and outputs`,
+      `it operates through a series of interconnected components that communicate and coordinate to produce results`,
+      `it uses a structured approach where each step is carefully designed to move closer to the final goal`
     ];
     
-    return helpResponses[Math.floor(Math.random() * helpResponses.length)];
+    return processExplanations[Math.floor(Math.random() * processExplanations.length)];
   };
 
-  const generateStudyTipsResponse = (userMessage: string, isFollowUp: boolean): string => {
-    if (isFollowUp) {
-      const followUpTips = [
-        "Since you're looking for more study strategies, here's another effective technique: the Feynman Technique. Try explaining concepts in simple terms as if teaching a child. This reveals gaps in your understanding.",
-        "Another powerful method is interleaving - mixing different topics during study sessions rather than focusing on one subject for hours. This improves long-term retention and problem-solving skills.",
-        "Consider using the 'testing effect' - actively recalling information from memory rather than just re-reading notes. This strengthens neural pathways and improves retention significantly.",
-        "Try the 'elaborative interrogation' technique: constantly ask yourself 'why' and 'how' questions about the material. This creates deeper connections and better understanding."
-      ];
-      return followUpTips[Math.floor(Math.random() * followUpTips.length)];
-    }
-    
-    const studyTips = [
-      "Here are some evidence-based study strategies: 1) Active recall - test yourself frequently, 2) Spaced repetition - review material at increasing intervals, 3) Pomodoro Technique - study in focused 25-minute blocks. Which technique interests you most?",
-      "Effective studying involves multiple strategies: 1) Create mind maps to visualize connections, 2) Use the 'teach-back' method - explain concepts aloud, 3) Practice retrieval - close your notes and write what you remember. What's your current study approach?",
-      "Research shows these methods boost learning: 1) Distributed practice - spread study sessions over time, 2) Dual coding - combine visual and verbal information, 3) Self-explanation - describe your reasoning process. Which would you like to try first?"
+  const generateUseCaseExplanation = (topic: string, userMessage: string): string => {
+    const useCaseExplanations = [
+      `you need to solve problems that require this specific approach or methodology`,
+      `the situation calls for the particular strengths and capabilities that this offers`,
+      `you're working with constraints or requirements that make this the optimal choice`,
+      `the context demands the specific benefits and features that this provides`
     ];
     
-    return studyTips[Math.floor(Math.random() * studyTips.length)];
+    return useCaseExplanations[Math.floor(Math.random() * useCaseExplanations.length)];
   };
 
-  const generateFlashcardResponse = (userMessage: string, isFollowUp: boolean): string => {
-    if (isFollowUp) {
-      const advancedFlashcardTips = [
-        "For advanced flashcard techniques, try 'image occlusion' - cover parts of diagrams or images to test visual memory. This works great for anatomy, geography, or technical diagrams.",
-        "Use 'cloze deletion' flashcards where you remove key words from sentences. This helps with context and understanding relationships between concepts.",
-        "Create 'reverse cards' - if your card asks 'What is X?', also make one asking 'What concept does this definition describe?' This strengthens bidirectional recall.",
-        "Try 'connection cards' that ask how two concepts relate to each other. This builds understanding of relationships rather than just isolated facts."
-      ];
-      return advancedFlashcardTips[Math.floor(Math.random() * advancedFlashcardTips.length)];
-    }
-    
-    const flashcardTips = [
-      "Flashcards are powerful when used correctly! Key principles: 1) Keep them simple and focused, 2) Use your own words, 3) Include context or examples, 4) Review regularly with spaced repetition. What topics do you want to create flashcards for?",
-      "Great choice for memorization! Effective flashcards should: 1) Test one concept at a time, 2) Use active recall rather than recognition, 3) Include visual elements when possible, 4) Connect to prior knowledge. What subject are you studying?",
-      "Flashcards work best with these strategies: 1) Create them as you learn, not just before exams, 2) Use the 'generation effect' - make your own rather than using pre-made ones, 3) Review difficult cards more frequently. What would you like help creating?"
+  const generateGeneralExplanation = (topic: string, userMessage: string, courseContext: any): string => {
+    const context = courseContext ? ` within ${courseContext.title}` : '';
+    const generalExplanations = [
+      `${topic}${context} represents an important concept that serves as a foundation for understanding more complex ideas`,
+      `${topic}${context} is a key element that connects to many other concepts and has practical applications`,
+      `${topic}${context} plays a crucial role in the overall framework and helps explain how different components interact`,
+      `${topic}${context} is essential for building a comprehensive understanding of the subject matter`
     ];
     
-    return flashcardTips[Math.floor(Math.random() * flashcardTips.length)];
+    return generalExplanations[Math.floor(Math.random() * generalExplanations.length)];
   };
 
-  const generateMotivationResponse = (userMessage: string, isFollowUp: boolean): string => {
-    const motivationResponses = [
-      "I understand learning can feel overwhelming sometimes. Remember, every expert was once a beginner who felt exactly like you do now. The key is persistence and celebrating small wins. What specific challenge can we tackle together?",
-      "It's completely normal to feel discouraged during learning - it means you're pushing your boundaries! Growth happens outside your comfort zone. Let's break down what's challenging you into smaller, manageable steps.",
-      "Learning is like building muscle - it requires consistent effort and sometimes feels uncomfortable. But each struggle makes you stronger. What specific area would you like to focus on to build your confidence?",
-      "Remember, confusion is often the first step toward understanding. Your brain is working hard to form new connections. Let's identify what's causing the confusion and address it systematically."
+  const generateFollowUpContent = (userMessage: string, keyTerms: string[], conversationContext: Message[]): string => {
+    const previousTopics = conversationContext.map(msg => extractKeyTerms(msg.content)).flat();
+    const connections = keyTerms.filter(term => previousTopics.includes(term));
+    
+    const followUpContent = [
+      `connects directly to what we discussed earlier, creating a more complete picture of how these concepts work together`,
+      `builds upon the foundation we established, adding new layers of understanding to your knowledge base`,
+      `reveals interesting connections to our previous conversation, showing how different ideas relate and influence each other`,
+      `extends our earlier discussion in a meaningful way, helping you see the broader implications and applications`
     ];
     
-    return motivationResponses[Math.floor(Math.random() * motivationResponses.length)];
+    return followUpContent[Math.floor(Math.random() * followUpContent.length)];
   };
 
-  const generateContextualResponse = (userMessage: string, conversationLength: number): string => {
-    const keyTerms = extractKeyTerms(userMessage);
-    const messageLength = userMessage.split(' ').length;
+  const generateDetailedResponse = (userMessage: string, keyTerms: string[], courseContext: any): string => {
+    const mainTopic = keyTerms[0] || 'this subject';
+    const context = courseContext ? ` in your study of ${courseContext.title}` : '';
     
-    // For longer, detailed questions
-    if (messageLength > 10) {
-      return `I can see you've put thought into this question. ${keyTerms.length > 0 ? `Regarding ${keyTerms[0]}, ` : ''}let me provide a comprehensive answer that addresses your specific concerns. ${generateDetailedResponse(userMessage)}`;
-    }
+    const detailedResponses = [
+      `Your question about ${mainTopic}${context} touches on several important aspects. Let me address each part systematically to give you a comprehensive understanding`,
+      `I can see you're thinking deeply about ${mainTopic}${context}. This kind of thorough questioning shows you're developing real expertise`,
+      `That's a sophisticated question about ${mainTopic}${context}. It shows you're moving beyond surface-level understanding to grasp the deeper implications`,
+      `Your detailed question about ${mainTopic}${context} demonstrates excellent critical thinking. Let me provide an equally thorough response`
+    ];
     
-    // For short questions
-    if (messageLength <= 3) {
-      return `I'd love to help you with ${keyTerms[0] || 'that topic'}! Could you provide a bit more context about what specifically you'd like to know? This will help me give you the most relevant and useful information.`;
-    }
+    return detailedResponses[Math.floor(Math.random() * detailedResponses.length)];
+  };
+
+  const generateAdaptiveResponse = (userMessage: string, keyTerms: string[], courseContext: any): string => {
+    const mainTopic = keyTerms[0] || 'this topic';
+    const context = courseContext ? ` within ${courseContext.title}` : '';
     
-    // For follow-up questions in longer conversations
-    if (conversationLength > 4) {
-      return `Building on our previous discussion, ${generateFollowUpResponse(userMessage, keyTerms)}`;
-    }
+    const adaptiveResponses = [
+      `${mainTopic}${context} is fascinating because it demonstrates how theory translates into practical application`,
+      `What makes ${mainTopic}${context} particularly interesting is how it connects to so many other concepts in the field`,
+      `${mainTopic}${context} is a great example of how fundamental principles can be applied in creative and innovative ways`,
+      `The beauty of ${mainTopic}${context} lies in its versatility and the different ways it can be understood and applied`
+    ];
+    
+    return adaptiveResponses[Math.floor(Math.random() * adaptiveResponses.length)];
+  };
+
+  const extractKeyTerms = (message: string): string[] => {
+    const commonWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'can', 'may', 'might', 'what', 'how', 'why', 'when', 'where', 'who', 'which', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their'];
+    
+    return message.toLowerCase()
+      .replace(/[^\w\s]/g, ' ') // Remove punctuation
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !commonWords.includes(word))
+      .slice(0, 3); // Take up to 3 key terms
+  };
     
     // Default contextual responses
     const contextualResponses = [

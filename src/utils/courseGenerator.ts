@@ -556,9 +556,18 @@ Sometimes denormalization is beneficial for:
 ];
 
 export const generateCourseFromYoutube = (url: string): GeneratedCourse => {
-  // Extract video ID to determine which template to use
+  if (!url || !url.trim()) {
+    throw new Error('YouTube URL is required');
+  }
+  
+  // Validate YouTube URL
   const videoId = extractYouTubeVideoId(url);
-  const templateIndex = videoId ? Math.abs(videoId.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % youtubeCourseTemplates.length : 0;
+  if (!videoId) {
+    throw new Error('Invalid YouTube URL');
+  }
+  
+  // Use video ID to determine which template to use for variety
+  const templateIndex = Math.abs(videoId.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % youtubeCourseTemplates.length;
   const template = youtubeCourseTemplates[templateIndex];
   
   return {
@@ -579,6 +588,15 @@ export const generateCourseFromYoutube = (url: string): GeneratedCourse => {
 };
 
 export const generateCourseFromPdf = (file: File): GeneratedCourse => {
+  if (!file) {
+    throw new Error('PDF file is required');
+  }
+  
+  // Validate file type
+  if (file.type !== 'application/pdf') {
+    throw new Error('Please upload a valid PDF file');
+  }
+  
   // Analyze file name to determine content type and generate appropriate course
   const fileName = file.name.toLowerCase();
   let template;
