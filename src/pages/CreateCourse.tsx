@@ -39,7 +39,10 @@ const CreateCourse: React.FC = () => {
     setIsGenerating(true);
 
     try {
-      const course = await generateCourseFromYoutube(youtubeUrl);
+      // Add a small delay to simulate processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const course = generateCourseFromYoutube(youtubeUrl);
       setSuccess('Course generated successfully!');
       
       // Navigate to the generated course after a short delay
@@ -71,7 +74,10 @@ const CreateCourse: React.FC = () => {
     setIsGenerating(true);
 
     try {
-      const course = await generateCourseFromPdf(pdfFile);
+      // Add a small delay to simulate processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const course = generateCourseFromPdf(pdfFile);
       setSuccess('Course generated successfully!');
       
       // Navigate to the generated course after a short delay

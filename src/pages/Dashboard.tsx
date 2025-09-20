@@ -30,7 +30,7 @@ const Dashboard = () => {
   // Refresh courses when component mounts
   React.useEffect(() => {
     setCourses(getCourses());
-  }, []);
+  }, [courses.length]); // Re-fetch when courses change
 
   const handleLogout = () => {
     logout();

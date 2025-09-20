@@ -570,7 +570,7 @@ export const generateCourseFromYoutube = (url: string): GeneratedCourse => {
   const templateIndex = Math.abs(videoId.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % youtubeCourseTemplates.length;
   const template = youtubeCourseTemplates[templateIndex];
   
-  return {
+  const course = {
     id: `youtube-${Date.now()}`,
     type: 'youtube',
     videoUrl: url,
@@ -584,7 +584,12 @@ export const generateCourseFromYoutube = (url: string): GeneratedCourse => {
       questions: quiz.questions.map((q, qIndex) => ({ ...q, id: qIndex + 1 }))
     })),
     flashcards: template.flashcards.map((card, index) => ({ ...card, id: index + 1 }))
-  };
+  } as GeneratedCourse;
+  
+  // Save the course to localStorage
+  saveCourse(course);
+  
+  return course;
 };
 
 export const generateCourseFromPdf = (file: File): GeneratedCourse => {
@@ -1024,7 +1029,7 @@ Regular assessment helps reinforce learning:
     };
   }
   
-  return {
+  const course = {
     id: `pdf-${Date.now()}`,
     type: 'pdf',
     progress: 0, // Start with 0% progress for new courses
@@ -1037,7 +1042,12 @@ Regular assessment helps reinforce learning:
       questions: quiz.questions.map((q, qIndex) => ({ ...q, id: qIndex + 1 }))
     })),
     flashcards: template.flashcards.map((card, index) => ({ ...card, id: index + 1 }))
-  };
+  } as GeneratedCourse;
+  
+  // Save the course to localStorage
+  saveCourse(course);
+  
+  return course;
 };
 
 const extractYouTubeVideoId = (url: string): string | null => {
