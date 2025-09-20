@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Youtube, BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
-import { generateCourseFromYoutube, generateCourseFromPDF } from '../utils/courseGenerator';
+import { generateCourseFromYoutube, generateCourseFromPdf } from '../utils/courseGenerator';
 
 const CreateCourse: React.FC = () => {
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ const CreateCourse: React.FC = () => {
     setIsGenerating(true);
 
     try {
-      const course = await generateCourseFromPDF(pdfFile);
+      const course = await generateCourseFromPdf(pdfFile);
       setSuccess('Course generated successfully!');
       
       // Navigate to the generated course after a short delay
