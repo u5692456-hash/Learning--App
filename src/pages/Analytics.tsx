@@ -302,7 +302,7 @@ const Analytics = () => {
       </div>
 
       {/* AI Tutor Chatbot */}
-      <ChatBot />
+      <ChatBot courseContext={{ title: 'Learning Analytics' }} />
     </div>
   );
 };

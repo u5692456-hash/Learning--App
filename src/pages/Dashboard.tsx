@@ -298,7 +298,7 @@ const Dashboard = () => {
       </div>
 
       {/* AI Tutor Chatbot */}
-      <ChatBot />
+      <ChatBot courseContext={{ title: 'Dashboard Overview' }} />
     </div>
   );
 };

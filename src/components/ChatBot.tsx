@@ -13,11 +13,14 @@ interface ChatBotProps {
   onClose: () => void;
 }
 
-const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
+const ChatBot: React.FC<ChatBotProps> = ({ courseContext }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hello! I\'m your AI learning assistant. How can I help you today?',
+      text: courseContext?.title 
+        ? `Hello! I'm your 24/7 AI tutor for "${courseContext.title}". I can help explain concepts, create practice questions, provide study tips, and answer any questions you have. What would you like to explore?`
+        : 'Hello! I\'m your 24/7 AI learning assistant. I can help you understand concepts, create study materials, and guide your learning. How can I assist you today?',
       sender: 'bot',
       timestamp: new Date()
     }
@@ -209,19 +212,36 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
+    <>
+      {/* Floating Chat Button */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 bg-gradient-to-r from-emerald-500 to-blue-600 text-white p-4 rounded-full shadow-2xl hover:from-emerald-600 hover:to-blue-700 transition-all z-40 group"
+      >
+        <div className="relative">
+          <Bot className="w-6 h-6" />
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+        </div>
+        
+        {/* Tooltip */}
+        <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-black/80 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          24/7 AI Tutor
+        </div>
+      </button>
+
+      {/* Chat Modal */}
+      {isOpen && (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md h-96 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center space-x-2">
             <Bot className="w-6 h-6 text-blue-600" />
-            <h3 className="font-semibold text-gray-800">AI Learning Assistant</h3>
+            <h3 className="font-semibold text-gray-800">24/7 AI Tutor</h3>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => setIsOpen(false)}
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -290,6 +310,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 };
 

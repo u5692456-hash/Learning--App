@@ -5,6 +5,7 @@ import { getCourseById, GeneratedCourse } from '../utils/courseGenerator';
 import VideoPlayer from '../components/VideoPlayer';
 import QuizModal from '../components/QuizModal';
 import FlashcardDeck from '../components/FlashcardDeck';
+import CourseSummary from '../components/CourseSummary';
 import ChatBot from '../components/ChatBot';
 
 export default function CourseView() {
@@ -54,6 +55,7 @@ export default function CourseView() {
   }
 
   const tabs = [
+    { id: 'summary', label: 'Summary', icon: BookOpen },
     { id: 'notes', label: 'Notes', icon: BookOpen },
     { id: 'quiz', label: 'Quiz', icon: Brain },
     { id: 'flashcards', label: 'Flashcards', icon: GraduationCap },
@@ -61,8 +63,6 @@ export default function CourseView() {
 
   // Filter tabs based on course type
   const availableTabs = course?.type === 'pdf' 
-    ? tabs.filter(tab => tab.id !== 'video')
-    : tabs;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -114,6 +114,10 @@ export default function CourseView() {
 
               {/* Tab Content */}
               <div className="p-6">
+                {activeTab === 'summary' && (
+                  <CourseSummary course={course} />
+                )}
+
                 {activeTab === 'video' && course?.type === 'youtube' && course.videoUrl && (
                   <div className="space-y-4">
                     <VideoPlayer videoUrl={course.videoUrl} />
@@ -288,13 +292,11 @@ export default function CourseView() {
       )}
 
       {/* AI Tutor Chatbot */}
-      <ChatBot 
-        courseContext={{
-          title: course?.title || 'Course',
-          currentLesson: availableTabs.find(tab => tab.id === activeTab)?.label,
-          progress: 75
-        }}
-      />
+      <ChatBot courseContext={{
+        title: course?.title || 'Course',
+        currentLesson: availableTabs.find(tab => tab.id === activeTab)?.label,
+        progress: course?.progress || 0
+      }} />
     </div>
   );
 }

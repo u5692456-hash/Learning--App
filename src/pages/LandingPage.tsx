@@ -25,6 +25,16 @@ const LandingPage = () => {
       title: "Smart Flashcards",
       description: "Generate intelligent flashcards for effective spaced repetition learning"
     }
+    {
+      icon: <Brain className="w-8 h-8" />,
+      title: "24/7 AI Tutor Chat",
+      description: "Get instant answers and explanations from your personal AI teaching assistant"
+    },
+    {
+      icon: <BookOpen className="w-8 h-8" />,
+      title: "Focused Course Summaries",
+      description: "Receive concise summaries highlighting the most important learning points"
+    }
   ];
 
   return (
@@ -98,6 +108,7 @@ const LandingPage = () => {
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
