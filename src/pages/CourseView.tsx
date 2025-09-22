@@ -20,6 +20,10 @@ export default function CourseView() {
       const courseData = getCourseById(id);
       if (courseData) {
         setCourse(courseData);
+        // Set default active tab based on course type
+        if (courseData.type === 'pdf') {
+          setActiveTab('notes');
+        }
       }
       setLoading(false);
     }
@@ -59,13 +63,6 @@ export default function CourseView() {
   const availableTabs = course?.type === 'pdf' 
     ? tabs.filter(tab => tab.id !== 'video')
     : tabs;
-
-  // Set default active tab based on course type
-  useEffect(() => {
-    if (course?.type === 'pdf') {
-      setActiveTab('notes');
-    }
-  }, [course, activeTab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
