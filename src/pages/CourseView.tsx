@@ -55,6 +55,7 @@ export default function CourseView() {
   }
 
   const tabs = [
+    { id: 'video', label: 'Video', icon: Play },
     { id: 'summary', label: 'Summary', icon: BookOpen },
     { id: 'notes', label: 'Notes', icon: BookOpen },
     { id: 'quiz', label: 'Quiz', icon: Brain },
@@ -62,7 +63,9 @@ export default function CourseView() {
   ];
 
   // Filter tabs based on course type
-  const availableTabs = course?.type === 'pdf' 
+  const availableTabs = course?.type === 'pdf'
+    ? tabs.filter(tab => tab.id !== 'video')
+    : tabs 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
